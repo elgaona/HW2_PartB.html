@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+  <meta charset="UTF-8">
+  <title>Volumetric Fire Three.js</title>
+  
+</head>
+
+<body>
+
+  
+<script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js'></script>
+<script src='https://cdn.rawgit.com/mattatz/THREE.Fire/master/FireShader.js'></script>
+<script src='https://cdn.rawgit.com/mattatz/THREE.Fire/master/Fire.js'></script>
+<script src='https://cdn.rawgit.com/josephg/noisejs/master/perlin.js'></script>
+<script src="./js/dat.gui.min.js"></script>
+
+<script>
+        
+var camera, scene, renderer;
+var mesh;
+var clock, controller, fire;
+
+init();
+
+function init() {
+
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.001, 1000);
+    camera.position.z = 2;
+
+    scene = new THREE.Scene();
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    var loader = new THREE.TextureLoader();
+    loader.crossOrigin = '';
+
+    var fireTex = loader.load("https://s3-us-west-2.amazonaws.com/s.cdpn.io/212131/Fire.png");
+
+    var wireframeMat = new THREE.MeshBasicMaterial({
+        color : new THREE.Color(0xffffff),
+        wireframe : true
+    });
+
+    fire = new THREE.Fire(fireTex);
+
+    var wireframe = new THREE.Mesh(fire.geometry, wireframeMat.clone());
+    fire.add(wireframe);
+    wireframe.visible = true;
+    wireframe.visible = false;
+    
+    console.log(fire);
+    fire.position.set(20, 20, 0);
+    fire.position.set(0, 0.25, 3.3);
+    scene.add(fire);
+
+    clock = new THREE.Clock();
+
+    window.addEventListener( 'resize', onWindowResize, false );
+    
+    var geometry = new THREE.BoxGeometry(1,1,1);
+    camera.position.z=5;
+    
+    
+    scene.add(new THREE.AmbientLight(0x000055));
+    var light = new THREE.PointLight( 0xffcc77, 1);
+    light.position.z = 0;
+    light.position.x = -3;
+    light.position.y = 1;
+    
+    
+    var plh = new THREE.PointLightHelper(light,1);
+
+    light2 = new THREE.PointLight( 0xffcc77, 1.0);
+    scene.add(light2);
+    light2.position.z = 3;
+    light2.position.x = 4;
+    light2.position.y = 2;
+    var plh2 = new THREE.PointLightHelper(light2,1);
+
+    var pgeom = new THREE.PlaneGeometry(5,5,99,99, 50);
+    var plane = THREE.SceneUtils.createMultiMaterialObject( pgeom, [
+
+    new THREE.MeshPhongMaterial( { color: 0x33ff33, specular: 0x773300, side: THREE.DoubleSide,  shading: THREE.FlatShading, shininess: 3} )
+
+    ]);
+    scene.add(plane);
+    
+    plane.rotation.x = -3.14/3.5;
+    noise.seed(Math.random());
+    for(var i=0;i<100;i++) {
+        for(var j=0;j<100;j++) {
+        var ex = 0.5;
+        pgeom.vertices[i+j*100].z = (noise.simplex2(i/100,j/100)+(noise.simplex2((i+200)/50,j/50)*Math.pow(ex,1))+(noise.simplex2((i+400)/25,j/25)*Math.pow(ex,2))+
+        (noise.simplex2((i+600)/12.5,j/12.5)*Math.pow(ex,3))+
++
+        (noise.simplex2((i+800)/6.25,j/6.25)*Math.pow(ex,4))                                 
+                                )/2;
+        }
+    }
+    
+var options = {
+  velx: 0,
+  vely: 0,
+  camera: {
+    speed: 0.0001
+  },
+  stop: function() {
+    this.velx = 0;
+    this.vely = 0;
+  },
+  reset: function() {
+    this.velx = 0.1;
+    this.vely = 0.1;
+    camera.position.z = 75;
+    camera.position.x = 0;
+    camera.position.y = 0;
+    wireframe.scale.x = 1;
+    wireframe.scale.y = 1;
+    wireframe.scale.z = 1;
+    wireframe.material.wireframe = true;
+  }
+};
+
+// DAT.GUI Related Stuff
+
+var gui = new dat.GUI();
+
+var cam = gui.addFolder('Camera');
+cam.add(camera.position, 'y', 0, 100).listen();
+cam.open();
+
+gui.add(options, 'stop');
+gui.add(options, 'reset');
+    
+
+}
+
+function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+}
+
+(function loop() {
+     requestAnimationFrame(loop);
+
+     var delta = clock.getDelta();
+     var t = clock.elapsedTime;
+     fire.update(t);
+     
+     renderer.render(scene, camera);
+})();
+        
+    </script>
+
+</body>
+</html>
